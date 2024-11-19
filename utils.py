@@ -3,6 +3,7 @@ from typing import Callable
 import re
 import time
 import os
+import openai
 
 def func_to_def(func: Callable) -> str:
     """
@@ -121,5 +122,44 @@ def chat_completion_anthropic(model, messages, temperature, max_tokens, api_dict
             time.sleep(API_RETRY_SLEEP)
         except Exception as e:
             print(e)
+            break
+    return output
+
+
+def chat_completion_openai(model, messages, temperature, max_tokens, api_dict=None):
+
+    if api_dict:
+        client = openai.OpenAI(
+            base_url=api_dict["api_base"],
+            api_key=api_dict["api_key"],
+        )
+    else:
+        client = openai.OpenAI()
+
+    output = API_ERROR_OUTPUT
+    for _ in range(API_MAX_RETRY):
+        try:
+            completion = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                timeout=60,
+            )
+            output = completion.choices[0].message.content
+            break
+        except openai.RateLimitError as e:
+            print(type(e), e)
+            time.sleep(10)
+        except openai.BadRequestError as e:
+            print(messages)
+            print(type(e), e)
+        except openai.APITimeoutError as e:
+            print(type(e), "The api request timed out")
+        except KeyError as e:
+            print(type(e), e)
+            break
+        except Exception as e:
+            print(type(e), e)
             break
     return output
