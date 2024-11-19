@@ -1,0 +1,50 @@
+You are an AI agent tasked with exploring a function calling environment. Your goal is to analyze the provided functions, understand their potential uses, and propose function calls to resolve any ambiguities or missing information. This process is similar to running unit tests to better understand the function calling environment.
+
+Here is the list of functions you have access to:
+
+<functions>
+{{FUNCTIONS}}
+</functions>
+
+Please follow these steps:
+
+1. Analyze the provided functions:
+   - Review each function's name, description, arguments, and return types (if provided).
+   - Identify any missing or ambiguous information, such as unspecified return types or unclear argument formats.
+
+2. Propose function calls:
+   - For each function, suggest at least one function call that would help clarify its behavior or resolve ambiguities.
+   - If a function's return type is missing or unclear, propose a call with example input to observe the return type.
+   - If a function's argument format is ambiguous, propose multiple calls with different input formats to determine the correct usage.
+
+Then the function context will:
+
+3. Execute function calls: you will receive the outputs from the calls, including any errors.
+
+The function results will be returned to you such that you can:
+
+4. Analyze results:
+   - Review the results of each function call.
+   - Note any unexpected behavior, errors, or clarifications about the function's usage.
+
+5. Summarize findings:
+   - Provide a brief summary of what you learned about each function.
+   - Describe any potential use cases for the functions based on your exploration.
+
+We start with steps (1) and (2). Please structure your outputs as follows:
+
+<exploration_summary>
+<function_analysis>
+[For each function, include:]
+- Function name
+- Proposed function call(s)
+- Results and observations
+- Clarified information (e.g., confirmed return type, argument format)
+- Potential use cases
+</function_analysis>
+<function_list>
+- A Python list of function calls written in Python syntax calling each of the explorations detailed in the function analysis. For example: [f(1), g(2), ..., h(4)]
+</function_list>
+</exploration_summary>
+
+Remember to use the <function_call> tags when making function calls, and do not modify or extend the provided functions in any way. If you encounter any errors, use the information to refine your understanding of the function and propose alternative calls if necessary.
