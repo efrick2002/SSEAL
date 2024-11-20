@@ -6,6 +6,7 @@ import os
 import openai
 import anthropic
 from anthropic import HUMAN_PROMPT
+import logging
 import re
 from pprint import pprint
 
@@ -40,7 +41,7 @@ class Agent(ABC):
             str: Generated prompt
         """
 
-        return f"""You are an AI agent tasked with exploring a function calling environment. Your goal is to analyze the provided functions, understand their potential uses, and propose function calls to resolve any ambiguities or missing information. This process is similar to running unit tests to better understand the function calling environment.
+        return f"""You are an AI agent that has can interact with an environment through function calls, which the environment will execute and return the results to you.
 
         Here is the list of functions you have access to:
 
@@ -115,13 +116,40 @@ class Agent(ABC):
         """
         pass
     
-    def explore_environment(self):
-        """TODO: Procedure to explore the environment, should ultimately use the update_function_context() 
+    def explore_environment(self, iterations: int = 2):
+        """Procedure to explore the environment, should ultimately use the update_function_context() 
         function to modify the signatures with updated and more reliable information""" 
+        with open("prompts/prompt2.txt") as fin:
+            prompt = fin.read()
+        self.function_call_log = []
+        prompt = prompt.replace("{{FUNCTIONS}}", self.function_context)
+        logging.info('Exploration prompt\n' + prompt)
+
+        for i in range(iterations):
+            completion = self.generate_response(prompt)
+            logging.info('completion: ' + completion)
+            env_response = self.environment.execute_function_list(completion)
+            self.function_call_log += env_response
+            prompt = f'Output from the environment, formatted as a list of dictionaries describing the function called, and its output: {env_response}\n'
+            if i < iterations - 1:
+                prompt += f'\nCarefully analyze this output, and propose additional function calls based on which functions you believe need more clarification. Use the same structure as before\n'
+ 
+        with open("prompts/prompt3.txt") as fin:
+            final_prompt = fin.read()
+
+        final_prompt = prompt + '\n' + final_prompt.replace("{{FUNCTIONS}}", self.function_context)
+        logging.info('final prompt: \n' + final_prompt)
+        completion = self.generate_response(final_prompt)
+        logging.info('final completion: \n' + completion)
+        new_context_pattern = r'<new context>(.*?)</new context>'
+        matches = re.findall(new_context_pattern, completion, re.DOTALL)
+        if matches:
+            new_function_context = matches[0]
+            self.update_function_context(new_function_context)
+            logging.info('Updated function context')
 
 class OpenAIAgent(Agent):
     """Implementation of an agent that uses OpenAI's API."""
-    
 
     
     def __init__(self, model: str = "gpt-4", api_dict: Optional[Dict[str, str]] = None):

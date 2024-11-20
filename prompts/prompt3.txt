@@ -1,0 +1,9 @@
+Now that you have explored the functions and observed their behavior, your job is to rewrite the function descriptors to better reflect their actual behavior. 
+Please structure your outputs as follows:
+
+<previous context>
+   {{FUNCTIONS}}
+</previous context>
+<new context>
+   Modify the previous context, specifically with docstrings and argument types and return types
+</new context>

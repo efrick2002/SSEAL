@@ -1,0 +1,32 @@
+You are an AI agent tasked with exploring a function calling environment. Your goal is to analyze the provided functions, understand their potential uses, and propose function calls to resolve any ambiguities or missing information. This process is similar to running unit tests to better understand the function calling environment.
+
+Here is the list of functions you have access to:
+
+<functions>
+{{FUNCTIONS}}
+</functions>
+
+Please follow these steps:
+
+1. Analyze the provided functions:
+   - Review each function's name, description, arguments, and return types (if provided).
+   - Identify any missing or ambiguous information, such as unspecified return types or unclear argument formats.
+
+2. Propose function calls:
+   - For each function, suggest at least one function call that would help clarify its behavior or resolve ambiguities.
+   - If a function's return type is missing or unclear, propose a call with example input to observe the return type.
+   - If a function's argument format is ambiguous, propose multiple calls with different input formats to determine the correct usage.
+
+Please structure your outputs as follows:
+
+<exploration_summary>
+<function_analysis>
+For each function, describe the function call you propose that will help clarify its behavior, and what you hope to learn from the results
+</function_analysis>
+<function_list>
+   A series of your chosen function calls, in python syntax, seperated by newlines. For example
+   f(1)
+   g()
+   h(4, 'a')
+</function_list>
+</exploration_summary>
