@@ -41,14 +41,14 @@ class Task:
 class LangChainRelationalTask(Task):
     name = 'LangChainRelationalTask'
 
-    def __init__(self, environment: Environment, agent: Agent, max_iterations_per_episode=3, explore_environment=False):
+    def __init__(self, environment: Environment, agent: Agent, max_iterations_per_episode=3, explore_environment_iterations=0):
 
         super().__init__(environment, agent)
         self.df = pd.read_parquet("hf://datasets/Nexusflow/LangChainRelational/data/train-00000-of-00001.parquet")
         self.num_episodes = len(self.df)    
         self.agent.register_environment(environment)
-        if explore_environment:
-            self.agent.explore_environment()
+        if explore_environment_iterations:
+            self.agent.explore_environment(iterations=explore_environment_iterations)
         self.agent.set_system_prompt(self.agent.make_function_context_prompt())
         self.max_iterations = max_iterations_per_episode
 

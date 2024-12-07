@@ -116,7 +116,7 @@ class Agent(ABC):
         """
         pass
     
-    def explore_environment(self, iterations: int = 2):
+    def explore_environment(self, iterations: int = 8):
         """Procedure to explore the environment, should ultimately use the update_function_context() 
         function to modify the signatures with updated and more reliable information""" 
         with open("prompts/prompt2.txt") as fin:
