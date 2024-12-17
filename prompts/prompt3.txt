@@ -1,9 +1,27 @@
-Now that you have explored the functions and observed their behavior, your job is to rewrite the function descriptors to better reflect their actual behavior. 
+Now that you have explored the functional environment, your job is to document important learnings for future tasks using this environment.
+
+First, for each function add clarifictions and context the function descriptors to better reflect their actual behavior. Cover all functions.
+
 Please structure your outputs as follows:
 
-<previous context>
-   {{FUNCTIONS}}
-</previous context>
-<new context>
-   Modify the previous context, specifically with docstrings and argument types and return types
-</new context>
+<functions>
+   Modify the list of function contexts provided. Specifically add/improve docstrings and argument types and return types. You should be very detailed, consider what ambiguities gave you trouble at the beginning. Give example argument inputs, example function outputs, and observed error cases. Make sure it is absolutly clear when and how to use each function. Make sure to include all functions.
+</functions>
+
+Then, add addition, notes, clarifications, or instructions on how to operate the environment for future reference.
+
+Please structure your outputs as follows:
+
+<additional_information>
+   Any clarifications, learnings, guides etc. Focus on how to interact with the environment. Explain to a future agent put in the same enviornment how they might go about answering user queries sent to the environment. The future agent will also only be able to submit functions in the <function_list> tags and recieve environment feedback.
+</additional_information>
+
+Then, if helpful, add some few-shot examples of potential use cases that may help for future reference.
+
+Please structure your outputs as follows:
+
+<examples>
+   Give reasonable example user queries on the enviornment. Then show can they can be answered step by step through calling functions in the environment, in the same way you have done so above. Be detailed on the process and reasoning.
+</examples>
+
+Between the updated functions, additional information, and examples, a future agent should be able to smoothly navigate this functional environment without undergoing this full exploration procedure. Make sure the information gained here is passed on through these fields.

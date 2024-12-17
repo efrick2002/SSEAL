@@ -4,6 +4,15 @@ from typing import Callable, Dict, List, Any, Optional, Union
 from abc import ABC, abstractmethod
 import importlib.util
 import sys
+import ast
+from typing import Any, Callable, Dict, List
+from copy import deepcopy
+
+def safer_eval(input, context):
+    try:
+        return eval(input, context)
+    except Exception as e:
+        return e
 
 class Environment:
     """Abstract base class for environments that LLM agents can interact with."""
@@ -19,7 +28,21 @@ class Environment:
         self.functions_file_path = functions_file_path
         self.state: Dict[str, Any] = {}
         self._load_functions()
+
+        # Create a dictionary to store the global context
+        self.global_context = {}
+
+        # Execute the file in the global context
+        with open(functions_file_path, "r") as file:
+            exec(file.read(), self.global_context)
+
+        self.functions_file_path = functions_file_path
         
+    def reset_original_context(self):
+        self.global_context = {}
+        with open(self.functions_file_path, "r") as file:
+            exec(file.read(), self.global_context)
+
     def _load_functions(self) -> None:
         """Load functions from the specified Python file into the environment."""
         try:
@@ -73,9 +96,9 @@ class Environment:
             indented_doc = '    """' + '\n    '.join(doc_lines) + '"""'
             func_def = f"{first_line}\n{indented_doc}"
         else:
-            func_def = f"{first_line}\n    pass"
+            func_def = f"{first_line}\n"
         
-        return f"{func_def}\n"
+        return f"{func_def}\n   pass\n"
     
     def get_function_context(self) -> str:
         """Get a summary of all available function signiatures in the environment."""
@@ -142,6 +165,124 @@ class Environment:
         except Exception as e:
             raise RuntimeError(f"Error executing function string '{function_str}': {str(e)}")
     
+
+    # Assuming FunctionExecutor is already defined as per the previous assistant's response
+
+    def parse_function_calls(self, multi_line_string: str) -> list:
+        """
+        Parses a multi-line string containing multiple function calls (possibly spanning multiple lines)
+        into a list of individual function call strings.
+
+        :param multi_line_string: The input string containing function calls separated by newlines.
+        :return: A list of function call strings.
+        """
+        function_calls = []
+        current_call = []
+        paren_balance = 0
+        in_string = False
+        string_char = ''
+
+        for line_number, line in enumerate(multi_line_string.splitlines(), start=1):
+            stripped_line = line.strip()
+            if not stripped_line:
+                continue  # Skip empty lines
+
+            if stripped_line.startswith("#"):
+                continue # Skip comment lines
+
+            for i, char in enumerate(line):
+                if in_string:
+                    if char == string_char:
+                        # Check for escaped quote
+                        if i > 0 and line[i - 1] != '\\':
+                            in_string = False
+                else:
+                    if char in ('"', "'"):
+                        in_string = True
+                        string_char = char
+                    elif char == '(':
+                        paren_balance += 1
+                    elif char == ')':
+                        paren_balance -= 1
+                        if paren_balance < 0:
+                            raise ValueError(f"Unbalanced parentheses at line {line_number}. Input was:\n{multi_line_string}")
+                # Ignore other characters
+
+            current_call.append(line)
+
+            if paren_balance == 0 and current_call:
+                # Function call is complete
+                call_str = '\n'.join(current_call).strip()
+                if call_str:
+                    function_calls.append(call_str)
+                current_call = []
+
+        if paren_balance != 0:
+            raise ValueError("Unbalanced parentheses in the input string.")
+
+        # Add any residual function call
+        if current_call:
+            call_str = '\n'.join(current_call).strip()
+            if call_str:
+                function_calls.append(call_str)
+        
+        print(multi_line_string, file=open("debug_fc.txt", "a"))
+
+        for call in function_calls:
+            print(call, file=open("debug_fc.txt", "a"))
+            print("\n\n", file=open("debug_fc.txt", "a"))
+
+        print("\n\n" + "=" * 100 + "\n\n", file=open("debug_fc.txt", "a"))
+
+        return function_calls
+    
+    def parse_call(self, code_string):
+        """
+        Parses a string into an AST and extracts all function call names.
+
+        Args:
+            code_string: The string containing Python code.
+
+        Returns:
+            A list of function call names (strings) found in the code.
+            Returns an empty list if parsing fails or no calls are found.
+        """
+        try:
+            tree = ast.parse(code_string)
+            calls = [node.func.id for node in ast.walk(tree) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)]
+            return calls
+        except SyntaxError as e:
+            raise e(f"Warning: Syntax error encountered while parsing: {code_string}")
+        
+    def validate_function_call(self, code_string):
+        """
+        Validates that all function calls in a string are from an approved list.
+
+        Args:
+            code_string: The string containing Python code.
+
+        Returns:
+            True if all function calls are approved, False otherwise.
+        """
+
+        called_functions = self.parse_call(code_string)
+        if not called_functions:  # Handle cases where parsing failed or no calls were found
+            return True  # Consider it valid if no calls were found
+        
+        for func in called_functions:
+            if func not in self.functions.keys():
+                raise NotImplementedError(f"Do not use functions that are not provided!Forbidden function {func} found called in {code_string}.")
+        
+        return True
+    
+    def handle_function_call(self, call, context):
+
+        try:
+            self.validate_function_call(call)
+            return safer_eval(call, context)
+        except Exception as e:
+            return e
+    
     def execute_function_list(self, function_list_str: str) -> List[Dict[str, Any]]:
         """
         Execute a list of functions from a string containing multiple function calls.
@@ -171,23 +312,35 @@ class Environment:
             matches = re.findall(r'<function_list>(.*?)</function_list>', function_list_str, re.DOTALL)
             if matches:
                 function_list_str = '\n'.join(matches)
+            else:
+                return [
+                {
+                    'call': None,
+                    'result': f"Error parsing function list: Not list found."
+                }
+            ]
         
         # Get individual function calls
-        calls = [call.strip() for call in function_list_str.split('\n') if call.strip()]
-        
-        # Execute each function call
+        try:
+            calls = self.parse_function_calls(function_list_str)
+        except Exception as e:
+            return [
+                {
+                    'call': None,
+                    'result': f"Error parsing function list: {e}"
+                }
+            ]
+
+        context = self.global_context
+
         for call in calls:
-            try:
-                result = self.execute_function_string(call)
-                results.append({
-                    'call': call,
-                    'result': result
-                })
-            except Exception as e:
-                results.append({
-                    'call': call,
-                    'error': str(e)
-                })
-        
+
+            result = self.handle_function_call(call, context)
+
+            results.append({
+                'call': call,
+                'result': result
+            })
+
         return results
     
