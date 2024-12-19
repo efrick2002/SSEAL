@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VLA as Tools</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .box {
+            border: 2px solid black;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #openVLA {
+            position: absolute;
+            top: 20px;
+            left: 1000px;
+            width: 150px;
+            height: 50px;
+            background-color: #bf672c;
+        }
+        #feedbackModule {
+            position: absolute;
+            top: 500px;
+            left: 201px;
+            width: 150px;
+            height: 50px;
+            background-color: #15cfbc8a;
+        }
+        #planningLLM {
+            position: absolute;
+            top: 500px;
+            left: 1000px;
+            height: 50px;
+            width: 150px;
+            background-color: #33be33;
+        }
+        .layout {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+        }
+        .video-container {
+            position: absolute;
+            top: 100px;
+            left: -2px;
+            transform: none;
+            display: flex;
+            gap: 20px;
+            background-color: #d0d0d0;
+            padding: 20px;
+            border-radius: 5px;
+            border: 2px solid black;
+        }
+        .stream {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        img {
+            border: 2px solid black;
+            width: 256px;
+            height: 256px;
+            object-fit: cover;
+            background-color: black;
+        }
+        .label {
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .input-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 50px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+        input {
+            padding: 8px;
+            width: 100%;
+            font-size: 16px;
+        }
+        .arrow {
+            position: absolute;
+            pointer-events: none;
+        }
+        .arrow path {
+            fill: none;
+            stroke: #000;
+            stroke-width: 4;
+        }
+        .arrow-text {
+            position: absolute;
+            background: white;
+            padding: 5px;
+            border-radius: 3px;
+            border: 1px solid #ccc;
+            font-size: 20px;
+            max-width: 200px;
+            text-align: center;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.3s ease-in-out;
+        }
+        #vla-to-feedback {
+            display: block;
+        }
+        #feedback-to-planning, #planning-to-vla {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <div id="openVLA" class="box">openVLA</div>
+        <div id="feedbackModule" class="box">Feedback Module</div>
+        <div id="planningLLM" class="box">Planning LLM</div>
+
+        <svg class="arrow" id="vla-to-feedback" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;">
+            <path d="M 1000 65 L 290 65 L 290 500" stroke="black" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="black"/>
+                </marker>
+            </defs>
+        </svg>
+
+        <svg class="arrow" id="feedback-to-planning" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;">
+            <path d="M 385 545 L 1000 545" stroke="black" stroke-width="2" fill="none" marker-end="url(#arrowhead2)"/>
+            <defs>
+                <marker id="arrowhead2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="black"/>
+                </marker>
+            </defs>
+        </svg>
+
+        <svg class="arrow" id="planning-to-vla" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;">
+            <path d="M 1090 500 L 1090 105" stroke="black" stroke-width="2" fill="none" marker-end="url(#arrowhead3)"/>
+            <defs>
+                <marker id="arrowhead3" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="black"/>
+                </marker>
+            </defs>
+        </svg>
+
+        <div id="feedback-text" class="arrow-text"></div>
+        <div id="instruction-text" class="arrow-text"></div>
+
+        <div class="video-container">
+            <div class="stream">
+                <img src="/video_feed?frame_type=latest" type="multipart/x-mixed-replace">
+                <div class="label">Agent view</div>
+            </div>
+            <div class="stream">
+                <img src="/video_feed?frame_type=wrist" type="multipart/x-mixed-replace">
+                <div class="label">Wrist view</div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <input type="text" id="mainInstructionInput" placeholder="Set main instruction">
+            <input type="text" id="instructionInput" placeholder="Send instruction">
+        </div>
+    </div>
+
+    <script>
+        // Function to show arrow and text with timeout
+        function showArrowAndText(arrowId, textId, message) {
+            if (message) {
+                const arrow = document.getElementById(arrowId);
+                const textElement = document.getElementById(textId);
+                
+                // Get the path element
+                const path = arrow.querySelector('path');
+                const pathLength = path.getTotalLength();
+                
+                // Calculate position along the path
+                const point = path.getPointAtLength(pathLength * 0.5); // Position text at middle of path
+                
+                textElement.textContent = message;
+                textElement.style.display = 'block';
+                textElement.style.left = `${point.x - textElement.offsetWidth/2}px`;
+                textElement.style.top = `${point.y - textElement.offsetHeight/2}px`;
+            }
+        }
+
+        // Add event listeners for input fields
+        document.getElementById('instructionInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const instruction = this.value;
+                fetch('/update_instruction', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ instruction: instruction })
+                });
+                this.value = '';
+            }
+        });
+
+        document.getElementById('mainInstructionInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const instruction = this.value;
+                fetch('/set_main_instruction', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ instruction: instruction })
+                });
+                this.value = '';
+            }
+        });
+
+        // Handle SSE events
+        const eventSource = new EventSource("/stream");
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'send_feedback') {
+                console.log('Received feedback:', data.message);
+                document.getElementById('feedback-to-planning').style.display = 'block';
+                showArrowAndText('feedback-to-planning', 'feedback-text', data.message);
+            } else if (data.type === 'send_instruction') {
+                console.log('Received instruction:', data.message);
+                document.getElementById('planning-to-vla').style.display = 'block';
+                showArrowAndText('planning-to-vla', 'instruction-text', data.message);
+            }
+        };
+    </script>
+</body>
+</html>
