@@ -54,3 +54,7 @@ Let's say we have a py file containing our new function context. We first should
 ### Experiment Commands
 
 The commands we ran for this project are in `commands.sh`. They can be run with `source commands.sh`. Running all of them will probably take many days. See [analysis.ipynb](analysis.ipynb) for generating the graphs in our paper. We also provide the outputs from our experiments in [experiments/](/experiments/).
+
+## Other Experiments
+
+For our VLA experiments please see the [vla_agents](vla_agents) directory. For the SWE-agent experiments please see the [swe-agent](swe-agent) directory.
