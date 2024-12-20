@@ -57,4 +57,4 @@ The commands we ran for this project are in `commands.sh`. They can be run with 
 
 ## Other Experiments
 
-For our VLA experiments please see the [vla_agents](vla_agents) directory. For the SWE-agent experiments please see the [swe-agent](swe-agent) directory.
+For our VLA experiments please see the [vla_agents](vla_agents) directory. For the SWE-agent experiments please see the [swe-age](https://github.com/SWE-agent/SWE-agent/tree/0772c99cb2903ccf22ba543eaf128742afa470d6) directory.
