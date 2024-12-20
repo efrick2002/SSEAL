@@ -476,3 +476,26 @@ class LinuxTerminalTask(Task):
 
         
         self.environment.reset_original_context()
+
+
+@register_task("custom")
+class Custom(Task):
+
+    name = "Custom"
+    df = []
+
+    def __init__(
+        self,
+        environment: Environment,
+        agent: Agent,
+        explore_agent: Agent = None,
+        max_iterations_per_episode=3,
+        explore_environment_iterations=0,
+    ):
+        super().__init__(
+            environment,
+            agent,
+            explore_agent=explore_agent,
+            max_iterations_per_episode=max_iterations_per_episode,
+            explore_environment_iterations=explore_environment_iterations,
+        )

@@ -13,7 +13,7 @@ Then, add addition, notes, clarifications, or instructions on how to operate the
 Please structure your outputs as follows:
 
 <additional_information>
-   Any clarifications, learnings, guides etc. Focus on how to interact with the environment. Explain to a future agent put in the same enviornment how they might go about answering user queries sent to the environment. The future agent will also only be able to submit functions in the <function_list> tags and recieve environment feedback.
+   Any clarifications, learnings, guides etc. Focus on how to interact with the environment. Explain to a future agent put in the same environment how they might go about answering user queries sent to the environment. The future agent will also only be able to submit functions in the <function_list> tags and receive environment feedback.
 </additional_information>
 
 Then, if helpful, add some few-shot examples of potential use cases that may help for future reference.
