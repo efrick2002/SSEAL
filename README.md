@@ -1,7 +1,4 @@
 # SSEAL Self-Supervised Explorative Agent Learning
-**This is the project repository for the SSEAL project for UC Berkeley's CS294-196 Fall 2024**
-
-Authors: Evan Frick, Dylan Goetting, Dhruv Gautam, Arjun Kohli, Keshav Singhal
 
 ## Setup
 
